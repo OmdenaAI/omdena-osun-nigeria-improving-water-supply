@@ -33,4 +33,10 @@ The clean dataframe derived from the dataset has the following features:
 - latitude: Latitude of the water point
 - distance_in_km: Distance between a resident in need of water and the water point. 
 ​
+### Code Usage:
+The `etl.py` script inside `task-1-data-collection` folder can be run as follows inside the `task-1-data-collection` directory:
+
+`python etl.py Water_Point_Data_Exchange__WPDx-Basic_.csv Osun water-point.db`.
+
+This happens when the dataset is inside the `task-1-data-collection`. 
 
