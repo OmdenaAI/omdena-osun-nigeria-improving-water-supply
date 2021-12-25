@@ -48,18 +48,18 @@ def distance_between_two_points(lat1, lat2, lon1, lon2):
      return np.round(c * r, 6)
 
 
-def clean_data_frame_step1(dataframe, state):
+def clean_data_frame_step1(dataframe):
     """
     A procedure to clean the dataframe by selecting all the rows in a given state
     Columns with all NaN are dropped
     
     INPUTS:
         dataframe:-> the loaded dataframe to be cleansed
-        state:> Nigerian state of interest e.g Osun, Lagos, Enugu, Kebbi etc
+        
     OUTPUT:
         Returns:-> cleaned dataframe 
     """
-    df= dataframe[dataframe['#adm1']==state]
+    df= dataframe
 
     df.dropna(how='all', axis=1, inplace=True)
 
