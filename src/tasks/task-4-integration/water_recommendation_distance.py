@@ -36,7 +36,7 @@ def distance_between_two_points(lat1, lat2, lon1, lon2):
      # calculate the result
      return np.round(c * r, 6)
 
-def closest_taps_distance(df1,lat, lng, dist, num_taps=10):
+def closest_taps_distance(lat, lng, dist, num_taps=10):
     """
     A procedure that recommends nearest water taps based on distance.
     INPUTS:
@@ -48,16 +48,16 @@ def closest_taps_distance(df1,lat, lng, dist, num_taps=10):
     """
     
      #Create a column for distance between a household and nearest water points
-    df = df1.copy()
+    df1 = df.copy()
     distance = []
     lat1 = float(lat)
     lon1 = float(lng)
     for row in df.itertuples(index=False):
         distance.append(distance_between_two_points(lat1, row.latitude, lon1, row.longitude) )
     
-    df['dist'] = distance
-    df = df[(df.subjective_quality=="Acceptable quality") & (df.status=="Functional (and in use)") & (df.water_source=="Borehole")]
-    closest_taps = df.sort_values(by="dist")
+    df1['dist'] = distance
+    df1 = df1[(df1.subjective_quality=="Acceptable quality") & (df1.status=="Functional (and in use)") & (df1.water_source=="Borehole")]
+    closest_taps = df1.sort_values(by="dist")
     
     # Get the top points
     closest_taps = closest_taps[['location', 'population', 'dist']][:num_taps]
@@ -68,3 +68,24 @@ def closest_taps_distance(df1,lat, lng, dist, num_taps=10):
 def getlocation():
     df2 = df.copy()
     return df2["location"].unique().tolist()
+
+def get_non_functional_waterbodies(lat, lng, dist, num_taps=10):
+    df3 = df.copy()
+    df3 = df3[df3['status'].str.contains('Non-', regex=False)]
+    return df3
+
+def get_subjective_quality_label():
+    df_subjective_quality_label = df.copy()
+    return df_subjective_quality_label.subjective_quality.unique()
+
+def get_subjective_quality_value():
+    df_subjective_quality_value = df.copy()
+    return df_subjective_quality_value.groupby(['subjective_quality']).size().reset_index(name='counts')
+
+def get_water_sources_label():
+    df_water_sources_label = df.copy()
+    return df_water_sources_label.water_source.unique()
+
+def get_water_sources_value():
+    df_water_sources_value = df.copy()
+    return df_water_sources_value.groupby(['water_source']).size().reset_index(name='counts')
