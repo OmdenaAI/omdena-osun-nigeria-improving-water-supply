@@ -1,3 +1,4 @@
+from math import dist
 from turtle import title
 import pandas as pd
 import numpy as np
@@ -8,9 +9,12 @@ import altair as alt
 import geocoder
 from geopy.geocoders import Nominatim
 import plotly.express as px
+import plotly.graph_objects as go
+
 
 
 st.set_page_config(layout="wide")
+st.image("image/logo.jpg", width=100)
 st.title("Explore Water Points in Nigeria")
 
 @st.cache
@@ -25,14 +29,41 @@ def load_data(state):
     
     return df_state
 
-state = 'Osun'
+@st.cache
+def load():
+    # Create an engine to connect to sqlite database
+    engine = create_engine('sqlite:///water_points.db')
+    conn = engine.connect()
+    # Load the dataset from the database
+    df = pd.read_sql_table('etlTable', con=conn)
+    df = df.drop(['resident_latitude', 'resident_longitude', 'distance_in_km'], axis=1)
+    return df
 
-state1 = st.sidebar.selectbox("Select Your State of Interest: ", ("Abia", "Adamawa", \
+df_n = load()
+
+
+with st.sidebar:
+    state1 = st.selectbox("Select Your State of Interest: ", ("Abia", "Adamawa", \
       "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", "Cross River",\
-           "Delta", "Ebonyi", "Edo", "Enugu", "Ekiti", "Gombe", "Imo", "Jigawa", "Kaduna",\
+           "Delta", "Ebonyi", "Edo", "Enugu", "Ekiti", "Federal Capital Territory" , "Gombe", "Imo", "Jigawa", "Kaduna",\
                 "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger", \
-               "Ogun", "Osun", "Ondo", "Plateau", "Rivers", "Sokoto", "Taraba", \
+               "Ogun", "Osun", "Ondo", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", \
                "Yobe", "Zamfara"))
+    
+    st.write('')
+    st.write('')
+    st.write("Total Number of Water Points in Nigeria is: {}".format(df_n.shape[0]))
+    
+    st.write('')
+    st.write('')
+    df = load_data(state1)
+    st.write("{} state has {} Water Points".format(state1, df.shape[0]))
+
+    st.write('')
+    st.write('')
+    url = "https://github.com/OmdenaAI/omdena-osun-nigeria-improving-water-supply"
+    st.write("Check out the Project Github Repository @ [Omdena Osun Nigeria Improving Water Supply](%s)" % url)
+
 
 
 
@@ -40,16 +71,15 @@ df = load_data(state1)
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.subheader("Status of Water in {}".format(state1))
     status = df['status'].value_counts()[:4]
     df_s = pd.DataFrame({"Frequency": status.values}, index = status.index)
     df_s['status'] = df_s.index
-    fig = px.bar(df_s, y="Frequency", x="status", color="status", title="Status of Water in {}".format(state1))
+    fig = px.bar(df_s, y="Frequency", x="status", color="status", title="Status of Water in {} state".format(state1))
     st.plotly_chart(fig)
     #st.bar_chart(df['status'].value_counts()[:4])
 
 with col2:
-    st.caption("Map of Water Points in {}".format(state1))
+    st.caption("Map of Water Points in {} state".format(state1))
     st.map(df)
 
 with col3:
@@ -61,11 +91,27 @@ with col3:
     st.plotly_chart(fig)
 
 #df_q.plot.pie(y = 'counts', figsize=(6,8))
-dist = st.slider('Select a distance',0, 20, 8)
-st.write("Distance: ", dist)
 
-no_taps = st.slider('Select a Number of taps',0, 20, 8)
-st.write("Number of taps: ", no_taps)
+
+st.write("")
+st.write("")
+st.write("")
+st.subheader("Select the Number of Nearby Water Points  You Want:")
+
+st.write("")
+st.write("")
+
+dist = st.selectbox("Choose the max radius/distance of Nearby Water Points: ", 
+ (2, 4, 6, 8, 10, 20, 30))
+
+st.write("")
+no_taps = st.selectbox("How Many Nearby Water Points do you want to View? ", (5, 10, 15))
+st.write("")
+
+#dist = st.slider('Select a distance',0, 20, 8)
+#st.write("Distance: ", dist)
+#no_taps = st.slider('Select a Number of taps',0, 20, 8)
+#st.write("Number of taps: ", no_taps)
 
 #Radio button to select location
 loc = st.radio(
@@ -113,13 +159,36 @@ btn = st.button("Submit")
 #find all the taps near by
 taps = closest_taps_distance(df,lat,lng,dist, no_taps)
 
+
+
 if btn:
-    st.subheader("The {} Nearest Water Points Distances".format(no_taps))
+    st.subheader("The {} Nearest Water Points".format(no_taps))
 
     c = alt.Chart(taps).mark_bar().encode(
         x='location', y='dist',  color='location', tooltip=['location', 'population', 'dist'])
 
-    st.altair_chart(c, use_container_width=True)
-    
+    #st.altair_chart(c, use_container_width=True)
+
+    plot = go.Figure(data=[go.Bar(
+    name = 'Population',
+    x = taps['location'],
+    y = taps['population']
+    ),
+                       go.Bar(
+    name = 'Distance',
+    x = taps['location'],
+    y = taps['dist']*100
+    )
+    ])
+
+    plot.update_layout(legend_title_text = "Location")
+    plot.update_layout(title = "{} Nearby Water Points By Distance and Population they serve".format(no_taps))
+    plot.update_xaxes(title_text="Locations")
+    plot.update_yaxes(title_text="Population/Distance in metres")
+
+    st.plotly_chart(plot)
+
+
+
     #Display Data frame
-    st.dataframe(taps)
+    st.dataframe(taps.reset_index())
