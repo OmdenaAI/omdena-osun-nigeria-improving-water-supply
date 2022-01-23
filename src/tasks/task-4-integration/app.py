@@ -1,7 +1,4 @@
-from math import dist
-from turtle import title
 import pandas as pd
-import numpy as np
 from sqlalchemy import create_engine
 import streamlit as st
 from water_recommendation_distance import closest_taps_distance, getlocation
